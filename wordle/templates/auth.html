@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Войти — Wordle</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0; padding: 0;
+      font-family: 'Lobster', sans-serif;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 100vh; background: #00FFFF;
+      position: relative; overflow: hidden;
+    }
+    .stars { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+    .star  { position: absolute; font-size: 20px; animation: twinkle 2s infinite alternate; }
+    @keyframes twinkle { 0% { opacity: 1; } 100% { opacity: 0.4; } }
+
+    .auth-box {
+      background: #fff; border-radius: 40px; padding: 40px 50px;
+      max-width: 500px; width: 90%;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      z-index: 1; display: flex; flex-direction: column; align-items: center;
+    }
+    h1 { color: #FF1493; font-size: 2.5em; margin: 0 0 20px 0; text-align: center; }
+
+    .tabs { display: flex; gap: 10px; margin-bottom: 25px; }
+    .tab-btn {
+      padding: 10px 30px; font-family: 'Lobster', sans-serif; font-size: 1.2em;
+      border: 3px solid #FF1493; border-radius: 50px;
+      background: transparent; color: #FF1493; cursor: pointer; transition: all 0.2s;
+    }
+    .tab-btn.active, .tab-btn:hover { background: #FF1493; color: #fff; }
+
+    form { width: 100%; display: flex; flex-direction: column; align-items: center; }
+    input {
+      display: block; width: 100%; margin: 10px 0; padding: 14px 18px;
+      font-family: 'Georgia', sans-serif; font-size: 1.3em;
+      border: 2px solid #ccc; border-radius: 10px;
+      box-sizing: border-box; text-align: center; color: #333;
+    }
+    input:focus { outline: none; border-color: #FF1493; box-shadow: 0 0 8px rgba(255,20,147,0.4); }
+
+    .submit-btn {
+      margin-top: 15px; padding: 14px 50px;
+      font-family: 'Lobster', sans-serif; font-size: 1.3em;
+      color: #fff; background: #FF1493; border: none; border-radius: 50px;
+      cursor: pointer; transition: background 0.3s, transform 0.2s;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .submit-btn:hover { background: #e0117a; transform: scale(1.04); }
+
+    #error-msg {
+      color: #e0117a; font-size: 1.1em;
+      margin-top: 12px; min-height: 1.4em; text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="stars" id="stars-container"></div>
+
+  <div class="auth-box">
+    <h1>Wordle</h1>
+
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-login"    onclick="switchTab('login')">Войти</button>
+      <button class="tab-btn"        id="tab-register" onclick="switchTab('register')">Регистрация</button>
+    </div>
+
+    <!-- это логин! -->
+    <form id="login-form">
+      <input type="text"     id="login-username" placeholder="Логин"  required />
+      <input type="password" id="login-password" placeholder="Пароль" required />
+      <button type="submit" class="submit-btn">Войти</button>
+    </form>
+
+    <!-- это регистрация -->
+    <form id="register-form" style="display:none;">
+      <input type="text"     id="reg-username" placeholder="Логин"  required />
+      <input type="password" id="reg-password" placeholder="Пароль" required />
+      <button type="submit" class="submit-btn">Создать аккаунт</button>
+    </form>
+
+    <!-- это для ошибок -->
+    <div id="error-msg"></div>
+  </div>
+
+  <script>
+    const starsContainer = document.getElementById('stars-container');
+    for (let i = 0; i < 30; i++) {
+      const left = (Math.random() * 100).toFixed(1);
+      const top  = (Math.random() * 100).toFixed(1);
+      const dur  = (1 + Math.random() * 2).toFixed(2);
+      starsContainer.insertAdjacentHTML('beforeend',
+        `<div class="star" style="left:${left}%;top:${top}%;animation-duration:${dur}s">⭐</div>`
+      );
+    }
+
+    function switchTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('login-form').style.display    = isLogin ? 'flex' : 'none';
+      document.getElementById('register-form').style.display = isLogin ? 'none' : 'flex';
+      document.getElementById('tab-login').classList.toggle('active', isLogin);
+      document.getElementById('tab-register').classList.toggle('active', !isLogin);
+      document.getElementById('error-msg').textContent = '';
+    }
+
+    function showError(msg) {
+      document.getElementById('error-msg').textContent = msg;
+    }
+
+    // мы получаем данные из формы
+    // отправляем запрос на сервер для регистрации
+    // и потом если все ОК то просто перенаправляем на меню
+    // бэкэнд отправит кукис назад и они сохранятся тк мы поставили credentials: 'same-origin'
+    // так что юзер будет авторизован сразу после регистрации
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    document.getElementById('login-form').onsubmit = async function (e) {
+      e.preventDefault();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      const res  = await fetch('/auth/login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        credentials: 'same-origin',
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        window.location.href = '/menu/';
+      } else {
+        showError(data.error || 'Ошибка входа');
+      }
+    };
+
+    //аналогично только уже для регистрации
+    document.getElementById('register-form').onsubmit = async function (e) {
+      e.preventDefault();
+      const username = document.getElementById('reg-username').value.trim();
+      const password = document.getElementById('reg-password').value;
+
+      const res  = await fetch('/auth/register/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        credentials: 'same-origin',
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(data.error || 'Ошибка регистрации');
+        return;
+      }
+
+      // мы автоматически логиним юзера после регистрации
+      const loginRes = await fetch('/auth/login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        credentials: 'same-origin',
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (loginRes.ok) {
+        window.location.href = '/menu/';
+      } else {
+        showError('Аккаунт создан');
+        switchTab('login');
+      }
+    };
+  </script>
+</body>
+</html>

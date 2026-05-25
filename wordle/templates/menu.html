@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wordle</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0; padding: 0;
+      font-family: 'Lobster', sans-serif;
+      height: 100vh; background: #00FFFF;
+      position: relative; overflow: hidden;
+    }
+
+    .menu-rectangle {
+      position: absolute;
+      top: 25px; left: 50%; transform: translateX(-50%);
+      width: 900px; max-width: 95vw; min-height: 570px;
+      background: rgba(255,255,255,0.8);
+      padding: 15px 10px; border-radius: 5px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      z-index: 1; display: flex; flex-direction: column; align-items: center;
+      box-sizing: border-box; margin-top: 10px;
+    }
+
+    .menu-rectangle .line {
+      width: 90%; height: 60px;
+      background-color: #FF1493; border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 10px; padding: 0 10px;
+    }
+    .menu-rectangle .line h2 {
+      margin: 0; font-family: 'Lobster', sans-serif;
+      font-size: 23px; color: #fff;
+    }
+
+    .menu-rectangle span {
+      font-family: 'Lobster', sans-serif;
+      font-size: 23px; color: #FF1493;
+      text-align: center; margin-bottom: 10px;
+    }
+
+    .options-container-vertical {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 10px; width: 100%; margin-top: 10px;
+    }
+
+    .option-button {
+      width: 80%; padding: 20px 200px;
+      background: #FF1493; color: #fff;
+      border: none; border-radius: 200px;
+      cursor: pointer; font-family: 'Lobster', sans-serif; font-size: 27px;
+      transition: background 0.3s;
+    }
+    .option-button:hover { background-color: #e0147a; }
+
+    #back-button {
+      margin-top: 15px; padding: 15px 80px;
+      font-family: 'Lobster', sans-serif; font-size: 20px;
+      background-color: #A9A9A9; color: #fff;
+      border: none; border-radius: 50px; cursor: pointer; transition: background 0.3s;
+    }
+    #back-button:hover { background-color: #696969; }
+
+    #rules-toggle {
+      cursor: pointer; margin: 10px;
+      font-family: 'Lobster', sans-serif; font-size: 20px;
+      color: #FFFFFF; background-color: #FF1493;
+      padding: 8px 12px; border-radius: 50px;
+      width: fit-content; position: relative; z-index: 10;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    #rules-text-container {
+      display: none; margin: 20px; max-width: 600px;
+      font-family: 'Lobster', sans-serif; font-size: 20px;
+      color: #FFFFFF; background-color: #696969;
+      padding: 15px 20px; border-radius: 10px;
+      text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      position: relative; z-index: 5;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="rules-toggle">Правила игры</div>
+  <div id="rating-toggle" onclick="location.href='/rating/'" style="cursor:pointer; margin:10px; font-family:'Lobster',sans-serif; font-size:20px; color:#FFFFFF; background-color:#FF1493; padding:8px 12px; border-radius:50px; width:fit-content; position:relative; z-index:10; box-shadow:0 2px 4px rgba(0,0,0,0.3);">Рейтинг</div>
+
+  <!-- Закладка с правилами  -->
+  <div id="rules-text-container">
+    <span id="rules-text">Вам дается 6 попыток, чтобы угадать гуманитарный термин из n букв.
+      Каждую попытку Вы можете вписывать в верхнюю строчку любое n-буквенное слово.
+      Если в загаданном слове нет поставленной Вами буквы – она подсветится серым. Если
+      буква есть, но стоит не на том месте, куда вы ее вписали, – она станет желтой.
+      Если же вы угадали букву и правильно расположили ее в строке – увидите зеленый квадрат.
+      Полностью зеленая строка – это победа. </span>
+  </div>
+
+  <div class="menu-rectangle" id="menu-rectangle">
+    <div class="line">
+      <h2 id="menu-title">Выбирайте режим и начинайте игру прямо сейчас!</h2>
+    </div>
+    <span id="option-label">Выберите тему:</span>
+    <div class="options-container-vertical" id="buttons-container">
+      <button class="option-button" onclick="selectTheme('phl')">Филология</button>
+      <button class="option-button" onclick="selectTheme('hi')">История</button>
+      <button class="option-button" onclick="selectTheme('so')">Обществознание</button>
+      <button class="option-button" onclick="selectTheme('ar')">Искусство</button>
+      <button class="option-button" onclick="selectTheme('ph')">Философия</button>
+    </div>
+  </div>
+
+  <script>
+    const THEMES_HTML = document.getElementById('buttons-container').innerHTML;
+
+    function selectTheme(theme) {
+      document.getElementById('option-label').textContent = 'Выберите количество букв в отгадываемом слове';
+      document.getElementById('buttons-container').innerHTML =
+        [5, 6, 7, 8].map(len =>
+          `<button class="option-button" onclick="location.href='/game/${len}/?theme=${theme}'">${len} букв</button>`
+        ).join('') +
+        `<button id="back-button" onclick="revertToThemeSelection()">Назад</button>`;
+    }
+
+    function revertToThemeSelection() {
+      document.getElementById('option-label').textContent = 'Выберите тему:';
+      document.getElementById('buttons-container').innerHTML = THEMES_HTML;
+    }
+
+    document.getElementById('rules-toggle').onclick = function () {
+      const rulesContainer = document.getElementById('rules-text-container');
+      if (rulesContainer.style.display === 'none' || rulesContainer.style.display === '') {
+        rulesContainer.style.display = 'block';
+        this.textContent = 'Скрыть правила';
+      } else {
+        rulesContainer.style.display = 'none';
+        this.textContent = 'Правила игры';
+      }
+    };
+  </script>
+
+</body>
+</html>

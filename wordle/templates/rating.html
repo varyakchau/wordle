@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Рейтинг</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Lobster', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #00FFFF;
+      color: #FF1493;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stars {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .star {
+      position: absolute;
+      font-size: 20px;
+      color: yellow;
+      opacity: 0.8;
+      animation: twinkle 2s infinite alternate;
+    }
+
+    @keyframes twinkle {
+      0% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0.4;
+      }
+    }
+
+    h1 {
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 3.5em;
+      color: #FF1493;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      z-index: 2;
+      white-space: nowrap;
+      margin: 0;
+    }
+
+    .rating-container {
+      position: absolute;
+      top: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 20px;
+      padding: 25px 30px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      z-index: 2;
+      min-width: 340px;
+      max-width: 90vw;
+      backdrop-filter: blur(5px);
+    }
+
+    .rating-title {
+      text-align: center;
+      font-size: 1.8em;
+      color: #FF1493;
+      margin: 0 0 15px 0;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .rating-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .rating-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 18px;
+      margin: 8px 0;
+      background: linear-gradient(135deg, #fff 0%, #ffeef5 100%);
+      border-radius: 15px;
+      border: 2px solid #FF1493;
+      transition: transform 0.2s, box-shadow 0.2s;
+      opacity: 0;
+      animation: slideIn 0.4s forwards;
+    }
+
+    .rating-item:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 12px rgba(255, 20, 147, 0.3);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .rank {
+      font-size: 1.6em;
+      font-weight: bold;
+      min-width: 30px;
+      text-align: center;
+      margin-right: 12px;
+    }
+
+    .rank-1 {
+      color: #FFD700;
+      text-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
+    }
+
+    .rank-2 {
+      color: #C0C0C0;
+      text-shadow: 0 0 6px rgba(192, 192, 192, 0.6);
+    }
+
+    .rank-3 {
+      color: #CD7F32;
+      text-shadow: 0 0 6px rgba(205, 127, 50, 0.6);
+    }
+
+    .player-info {
+      flex: 1;
+    }
+
+    .player-name {
+      font-size: 1.3em;
+      color: #333;
+      margin: 0;
+    }
+
+    .player-meta {
+      font-size: 1em;
+      color: #666;
+      margin: 4px 0 0 0;
+    }
+
+    .score-badge {
+      background: #FF1493;
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 1.1em;
+      font-weight: bold;
+      min-width: 60px;
+      text-align: center;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .status-msg {
+      text-align: center;
+      font-size: 1.2em;
+      color: #888;
+      padding: 15px;
+      display: none;
+    }
+
+    .status-msg.loading {
+      display: block;
+      color: #FF1493;
+    }
+
+    .status-msg.error {
+      display: block;
+      color: #d9534f;
+    }
+
+    .back-button {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 15px 50px;
+      font-family: 'Lobster', sans-serif;
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #fff;
+      background-color: #FF1493;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+      transition: background-color 0.3s, transform 0.3s;
+      text-decoration: none;
+      display: inline-block;
+      z-index: 2;
+    }
+
+    .back-button:hover {
+      background-color: #e0117a;
+      transform: translateX(-50%) scale(1.05);
+    }
+
+    #error-msg {
+      color: #e0117a;
+      font-size: 1.1em;
+      margin-top: 12px;
+      min-height: 1.4em;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Рейтинг</h1>
+
+  <div class="rating-container">
+    <div class="rating-title">Топ 20 игроков</div>
+    <div id="loading" class="status-msg loading">Загрузка данных...</div>
+    <div id="error-msg" class="status-msg" style="display:none;"></div>
+    <div id="empty" class="status-msg" style="display:none;">Пока нет игроков</div>
+    <ul id="rating-list" class="rating-list"></ul>
+  </div>
+
+  <a href="/menu/" class="back-button">В меню</a>
+
+  <script>
+    const starsContainer = document.createElement('div');
+    starsContainer.className = 'stars';
+    document.body.appendChild(starsContainer);
+    for (let i = 0; i < 30; i++) {
+      const s = document.createElement('div');
+      s.className = 'star'; s.innerHTML = '⭐';
+      s.style.left = Math.random() * 100 + '%';
+      s.style.top = Math.random() * 100 + '%';
+      s.style.animationDuration = (1 + Math.random() * 2) + 's';
+      starsContainer.appendChild(s);
+    }
+  </script>
+
+  <script>
+    async function fetchLeaderboard() {
+      const list = document.getElementById('rating-list');
+      const loading = document.getElementById('loading');
+      const errorMsg = document.getElementById('error-msg');
+      const empty = document.getElementById('empty');
+
+      loading.style.display = 'block';
+      errorMsg.style.display = 'none';
+      empty.style.display = 'none';
+      list.innerHTML = '';
+
+      try {
+        const res = await fetch('/leaderboard/?limit=20', { credentials: 'same-origin' });
+        const data = await res.json();
+
+        if (!res.ok) {
+          errorMsg.textContent = data.error || 'Не удалось загрузить рейтинг';
+          errorMsg.style.display = 'block';
+          return;
+        }
+
+        if (data.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+        
+        data.forEach((p, i) => {
+          const rankClass = i < 3 ? `rank-${i + 1}` : '';
+          const li = document.createElement('li');
+          li.className = 'rating-item';
+          li.style.animationDelay = `${i * 0.05}s`;
+          const nameDiv = document.createElement('div');
+          nameDiv.className = 'player-info';
+          const name = document.createElement('p');
+          name.className = 'player-name';
+          name.textContent = p.username;
+          nameDiv.appendChild(name);
+          li.innerHTML = `<span class="rank ${rankClass}">${i + 1}</span>`;
+          li.appendChild(nameDiv);
+          const badge = document.createElement('span');
+          badge.className = 'score-badge';
+          badge.textContent = p.rating;
+          li.appendChild(badge);
+          list.appendChild(li);
+        });
+
+      } catch (err) {
+        errorMsg.textContent = 'Ошибка сети. Проверьте соединение.';
+        errorMsg.style.display = 'block';
+      } finally {
+        loading.style.display = 'none';
+      }
+    }
+
+    // обновляем рейтинг в реальном времени
+    fetchLeaderboard();
+    setInterval(fetchLeaderboard, 30000);
+  </script>
+
+</body>
+
+</html>

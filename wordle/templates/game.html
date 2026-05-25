@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle - {{ word_length }} букв</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Lobster', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #00FFFF;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            font-size: 20px;
+            color: yellow;
+            opacity: 0.8;
+            animation: twinkle 2s infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.4;
+            }
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            padding: 20px 30px;
+            max-width: 550px;
+            margin: 30px auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 1;
+            position: relative;
+        }
+
+        h1 {
+            color: #FF1493;
+            font-size: 2.5em;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            margin: 0 0 10px 0;
+            text-align: center;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #FF1493, #e0117a);
+            color: white;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .board {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 15px;
+        }
+
+        .row {
+            display: flex;
+            justify-content: center;
+        }
+
+        .cell {
+            width: 60px;
+            height: 60px;
+            border: 3px solid #FF1493;
+            margin: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+            text-transform: uppercase;
+            background-color: white;
+            color: #333;
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+
+        .cell.green {
+            background-color: #4CAF50;
+            border-color: #4CAF50;
+            color: white;
+        }
+
+        .cell.yellow {
+            background-color: #FFC107;
+            border-color: #FFC107;
+            color: white;
+        }
+
+        .cell.gray {
+            background-color: #9E9E9E;
+            border-color: #9E9E9E;
+            color: white;
+        }
+
+        input {
+            padding: 10px 15px;
+            font-size: 22px;
+            text-align: center;
+            letter-spacing: 5px;
+            width: 200px;
+            margin: 10px;
+            border: 3px solid #FF1493;
+            border-radius: 50px;
+            font-family: 'Lobster', sans-serif;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #e0117a;
+            box-shadow: 0 0 10px rgba(255, 20, 147, 0.4);
+        }
+
+        button {
+            background-color: #FF1493;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            font-size: 1.1em;
+            font-family: 'Lobster', sans-serif;
+            margin: 5px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            background-color: #e0117a;
+            transform: scale(1.05);
+        }
+
+        .back-btn {
+            background-color: #9E9E9E;
+        }
+
+        .back-btn:hover {
+            background-color: #757575;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            max-width: 400px;
+            text-align: center;
+            font-family: 'Lobster', sans-serif;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-content h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .modal-content p {
+            color: #333;
+            font-size: 1.2em;
+            margin: 15px 0;
+        }
+
+        .modal-content .word {
+            font-size: 1.8em;
+            color: #FF1493;
+            font-weight: bold;
+        }
+
+        .modal-content .definition {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 15px;
+            margin: 20px 0;
+            font-size: 1.1em;
+        }
+
+        .modal-btn {
+            background-color: #FF1493;
+            color: white;
+            padding: 10px 25px;
+            font-size: 1.2em;
+            font-family: 'Lobster', sans-serif;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .modal-btn:hover {
+            background-color: #e0117a;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body data-word-length="{{ word_length }}">
+    <div class="stars" id="stars-container"></div>
+
+    <div class="game-container">
+        <div class="center">
+            <div class="level-badge">Слова из {{ word_length }} букв</div>
+            <h1>Угадай слово</h1>
+        </div>
+
+        <div class="board" id="board"></div>
+
+        <div class="center">
+            <input type="text" id="guess" maxlength="{{ word_length }}" placeholder="Введите слово">
+            <br>
+
+            <button onclick="checkGuess()">Проверить</button>
+            <button onclick="resetGame()">Сброс</button>
+        </div>
+
+        <div class="center">
+            <button class="back-btn" onclick="location.href='/menu'">Меню</button>
+            <button class="back-btn" onclick="location.href='/rating'">Рейтинг</button>
+        </div>
+    </div>
+
+    <div id="resultModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">🎉 Вы выиграли! 🎉</h2>
+            <p>Загаданное слово:</p>
+            <div class="word" id="modalWord">СЛОВО</div>
+            <div class="definition" id="modalDefinition">
+                Единица речи, выражающая законченную мысль.
+            </div>
+            <button class="modal-btn" onclick="resetGame(); document.getElementById('resultModal').classList.remove('active')">Играть снова</button>
+            <button class="modal-btn" onclick="location.href='/menu/'">В меню</button>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const theme = params.get("theme");
+
+        const wordLength = parseInt(document.body.dataset.wordLength);
+        const maxAttempts = 6; 
+        let gameId = null;
+        let currentRow = 0;
+        let gameOver = false;
+        let guessedWords = [];
+
+        const starCount = 30;
+        const container = document.getElementById('stars-container');
+
+        for (let i = 0; i < starCount; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.innerHTML = '⭐';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDuration = (1 + Math.random() * 2) + 's';
+            container.appendChild(star);
+        }
+        // получаем кукис из барузера
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) {
+                return parts.pop().split(';').shift();
+            }
+        }
+
+        // функция для создания игрового поля, она генерирует 6 строк по n ячеек в каждой
+        function createBoard() {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            for (let i = 0; i < maxAttempts; i++) {
+                const row = document.createElement('div');
+                row.className = 'row';
+                for (let j = 0; j < wordLength; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    row.appendChild(cell);
+                }
+                board.appendChild(row);
+            }
+        }
+        // показываем итоги игры
+        function showModal(isWin, word, definition) {
+            const modal = document.getElementById('resultModal');
+            const title = document.getElementById('modalTitle');
+            const modalWord = document.getElementById('modalWord');
+            const modalDefinition = document.getElementById('modalDefinition');
+
+            if (isWin) {
+                title.textContent = '🎉 Вы выиграли! 🎉';
+                title.style.color = '#4CAF50';
+            } else {
+                title.textContent = '😔 Вы проиграли 😔';
+                title.style.color = '#f44336';
+            }
+
+            modalWord.textContent = word;
+            modalDefinition.textContent = definition;
+            modal.classList.add('active');
+        }
+
+
+        function resetGame() {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            currentRow = 0;
+            gameOver = false;
+            guessedWords = [];
+            gameId = null;
+            createBoard();
+            document.getElementById('guess').value = '';
+            document.getElementById('guess').disabled = false;
+            document.getElementById('guess').focus();
+            startGame();
+        }
+
+        async function startGame() {
+            const response = await fetch("/start-game/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken"),
+                },
+                credentials: "same-origin",
+                body: JSON.stringify({
+                    theme: theme,
+                    length: wordLength,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                window.location.href = '/menu/';
+                return;
+            }
+
+            gameId = data.game_id;
+        }
+
+        async function checkGuess() {
+            if (gameOver) {
+                alert('Игра уже окончена! Нажмите "Сброс" для новой игры.');
+                return;
+            }
+
+            if (!gameId) {
+                alert("Игра ещё не создана");
+                return;
+            }
+
+            const input = document.getElementById('guess');
+            const guess = input.value.toUpperCase();
+
+            if (guess.length !== wordLength) {
+                alert(`Введите слово из ${wordLength} букв!`);
+                return;
+            }
+
+            if (guessedWords.includes(guess)) {
+                alert('Вы уже пробовали это слово!');
+                input.value = '';
+                input.focus();
+                return;
+            }
+
+            const response = await fetch("/make-guess/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken"),
+                },
+                credentials: "same-origin",
+                body: JSON.stringify({
+                    game_id: gameId,
+                    word: guess,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.error || "Ошибка проверки слова");
+                return;
+            }
+
+            guessedWords.push(guess);
+
+            const row = document.querySelectorAll('.row')[currentRow];
+            const cells = row.querySelectorAll('.cell');
+
+            for (let i = 0; i < data.result.length; i++) {
+                cells[i].textContent = data.result[i].letter.toUpperCase();
+                cells[i].className = `cell ${data.result[i].status}`;
+            }
+
+            currentRow++;
+            input.value = '';
+            input.focus();
+
+            if (data.is_finished) {
+                gameOver = true;
+                showModal(data.is_won, data.answer, data.definition);
+            }
+        }
+
+        createBoard();
+        startGame();
+    </script>
+</body>
+
+</html>
